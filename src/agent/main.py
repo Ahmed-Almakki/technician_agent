@@ -11,18 +11,18 @@ tools = [search, categories, steps_follow]
 memory_saver = InMemorySaver()
 
 
-def run_agent(query: json, llm: HuggingFaceEndpoint, session_id: str,) -> dict:
+def run_agent(query, chat_model, session_id):
     """
     Runs the agent to process the user query.
 
     Args:
         query (json): The user's query in JSON format.
-        llm (HuggingFaceEndpoint): The language model instance.
+        chat_model (ChatGroq): The language model instance.
         session_id (str): The unique ID for the user's conversation.
     """
     user_query_string = json.dumps(query)
 
-    chat_model = ChatHuggingFace(llm=llm)
+    # chat_model = ChatHuggingFace(llm=llm)
 
     agent = create_agent(
         model=chat_model,

@@ -1,20 +1,22 @@
 import os
 from dotenv import load_dotenv
-from langchain_huggingface import HuggingFaceEndpoint
+# from langchain_huggingface import HuggingFaceEndpoint
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
 # Configuration for the LLM
-repo_id="meta-llama/Llama-3.1-8B-Instruct"
+# repo_id="meta-llama/Llama-3.1-8B-Instruct"
+repo_id="openai/gpt-oss-120b"
 temperature=0.2
 max_new_tokens=1024
 huggingfacehub_api_token=os.getenv("HG_FACE")
 
-llm = HuggingFaceEndpoint(
-    repo_id=repo_id,
-    temperature=temperature,
-    max_new_tokens=max_new_tokens,
-    huggingfacehub_api_token=huggingfacehub_api_token
+llm = ChatGroq(
+    model=repo_id, 
+    temperature=temperature, 
+    max_retries=2,
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 # system_message = """
@@ -55,6 +57,7 @@ system_message = """
     2. SINGLE SOURCE OF TRUTH: Every single repair step, image, or hardware detail you provide to the user MUST be extracted directly from your tool outputs. 
     3. GRACEFUL FAILURE: If your tools return no relevant guides for a valid problem after thorough searching, you must politely inform the user that no official guide is available. 
        Do not attempt to fill the gap by guessing the repair process.
+    4. If one of the tools return an empty list, you can try to adapt your search just 4 times, if you still get an empty list, you must inform the user that no official guide is available.
 
     COMMUNICATION STYLE & TONE:
     - Address the user directly using "you" and "your". NEVER refer to them in the third person as "the user".

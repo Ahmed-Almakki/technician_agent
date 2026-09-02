@@ -1,20 +1,29 @@
 import os
 from dotenv import load_dotenv
-from langchain_huggingface import HuggingFaceEndpoint
+# from langchain_huggingface import HuggingFaceEndpoint
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
 # Configuration for the LLM
-repo_id="meta-llama/Llama-3.1-8B-Instruct"
+# repo_id="meta-llama/Llama-3.1-8B-Instruct"
+repo_id="llama-3.1-70b-versatile"
 temperature=0.7
 max_new_tokens=256
 huggingfacehub_api_token=os.getenv("HG_FACE")
 
-llm = HuggingFaceEndpoint(
-    repo_id=repo_id,
-    temperature=temperature,
-    max_new_tokens=max_new_tokens,
-    huggingfacehub_api_token=huggingfacehub_api_token
+# llm = HuggingFaceEndpoint(
+#     repo_id=repo_id,
+#     temperature=temperature,
+#     max_new_tokens=max_new_tokens,
+#     huggingfacehub_api_token=huggingfacehub_api_token
+# )
+
+llm = ChatGroq(
+    model=repo_id, 
+    temperature=temperature, 
+    max_retries=2,
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
 system_message = """

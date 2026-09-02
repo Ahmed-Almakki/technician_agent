@@ -1,5 +1,7 @@
 import requests as req
 from langchain_core.tools import tool
+import json
+
 
 @tool
 def search(device_name: str) -> list:
@@ -13,7 +15,7 @@ def search(device_name: str) -> list:
         response = req.get(request_url)
 
         if response.status_code == 404:
-            return []
+            return "No search results found for the given device name."
         
         response.raise_for_status()
         res = response.json()
@@ -29,7 +31,7 @@ def search(device_name: str) -> list:
         print(f"Error occurred while fetching data: {e}")
         res = {"error": str(e)}
 
-    return devices
+    return json.dumps(devices)
 
 @tool
 def categories(device_name: str) -> list:
@@ -43,7 +45,7 @@ def categories(device_name: str) -> list:
         response = req.get(request_url)
 
         if response.status_code == 404:
-            return []
+            return "No categories found for the given device name."
         
         response.raise_for_status()
         res = response.json()
@@ -59,7 +61,7 @@ def categories(device_name: str) -> list:
         print(f"Error occurred while fetching data: {e}")
         res = {"error": str(e)}
 
-    return categories
+    return json.dumps(categories)
 
 @tool
 def steps_follow(guide_id: str):
@@ -74,7 +76,7 @@ def steps_follow(guide_id: str):
         response = req.get(request_url)
 
         if response.status_code == 404:
-            return []
+            return "No steps found for the given guide ID."
         
         response.raise_for_status()
         res = response.json()
@@ -92,11 +94,11 @@ def steps_follow(guide_id: str):
                 images = [img['thumbnail'] for img in item['media']['data']]
                 details['images'] = images
                 result.append(details)
-        return result
+        return json.dumps(result)
     except req.RequestException as e:
         print(f"Error occurred while fetching data: {e}")
         res = {"error": str(e)}
-        return []
+        return json.dumps(res)
 
 
 # print(search("Samsung Galaxy S21"))
