@@ -51,7 +51,7 @@ def categories(device_name: str) -> list:
         result = res.get('guides', [])
 
         if result:
-            categories = [{'guideid': item['guideid'], 'category': item['category'], 'title': item['title']} for item in result]
+            categories = [{'guideid': item['guideid'], 'device_name': item['category'], 'problem': item['title']} for item in result]
         else:
             categories = []
 
@@ -65,6 +65,8 @@ def categories(device_name: str) -> list:
 def steps_follow(guide_id: str):
     """
     Fetches the steps for a given guide ID from the iFixit API.
+    Use the ouptut of this function to provide the user with step by step instructions for their device repair.
+    the ouptut of this function is a list of dictionaries, each dictionary contains the title and text steps and images for each step.
     """
     url = "https://www.ifixit.com/api/2.0/guides/"
     request_url = f"{url}{guide_id}"
@@ -85,7 +87,7 @@ def steps_follow(guide_id: str):
                 details['title'] = item['title']
 
                 text = [step['text_raw'] for step in item['lines']]
-                details['text'] = text
+                details['steps'] = text
 
                 images = [img['thumbnail'] for img in item['media']['data']]
                 details['images'] = images
