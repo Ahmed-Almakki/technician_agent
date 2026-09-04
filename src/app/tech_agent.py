@@ -4,11 +4,9 @@ import uuid
 from src.agent.main import run_agent
 from src.agent.config import llm
 
-# --- Page Config ---
-# We use "wide" layout here so the text and images have plenty of room side-by-side
+
 st.set_page_config(page_title="Your Tech Guy", layout="wide")
 
-# --- Initialize Session State ---
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
 
@@ -19,13 +17,11 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# --- Header ---
-st.title("Your Tech Guy")
+st.title("المميز")
 st.markdown("Tell me what's broken, or ask a follow-up question if you're stuck on a step.")
 st.write("---")
 
 
-# --- Helper Function to Render Steps ---
 def render_repair_steps(steps_data):
     """Renders the steps and images side-by-side."""
     for idx, section in enumerate(steps_data, 1):

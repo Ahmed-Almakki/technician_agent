@@ -28,12 +28,18 @@ def run_agent(query, chat_model, session_id):
         #     {"messages": [{"role": "user", "content": user_query_string}]},
         #     config=thread_config
         # ):
+        result = "asdf"
         stream = agent.stream_events(
             {"messages": [{"role": "user", "content": user_query_string}]},
             config=thread_config,
             version="v3"
         )
-        print("stream:\n", stream)
+        for message in stream.messages:
+            print("reasoning:", message.reasoning, flush=True)
+            full_message = message.output.content[1]
+        if full_message:
+            result = full_message['text']
+
             # node_name = list(chunk.keys())[0]
 
             # if node_name == "tools" and chunk['tools'].get('messages'): 
@@ -53,19 +59,18 @@ def run_agent(query, chat_model, session_id):
                 
     except Exception as e:
         if "rate_limit_exceeded" in str(e) or "413" in str(e):
-            final_answer = "I've hit my token limit for a moment! Please wait a minute and try asking again."
+            result = "I've hit my token limit for a moment! Please wait a minute and try asking again."
         else:
-            final_answer = "Oops, a system error occurred while processing your request."
+            result = "Oops, a system error occurred while processing your request."
             
         # Log the actual error to your terminal for debugging, but hide it from the user interface
         print(f"API Error: {str(e)}")
 
-    return final_answer, extracted_steps
+    return result
 
 
-query = json.loads('{"device_name": "Sony PlayStation 5", "problem": "fan replacement"}')
-# query = "How i fix my samsung galaxy s21 ultra screen that is broken and not working properly"
-print("query:\n\n", query)
+# query = json.loads('{"device_name": "Sony PlayStation 5", "problem": "fan replacement"}')
+query = "How i restart my iphone 13"
 result = run_agent(query, llm, "test_session_1")
 print("\n\n", "=========="*40)
 print("final result:\n\n", result)

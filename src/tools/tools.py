@@ -67,8 +67,9 @@ def categories(device_name: str) -> list:
 def steps_follow(guide_id: str):
     """
     Fetches the steps for a given guide ID from the iFixit API.
-    Use the ouptut of this function to provide the user with step by step instructions for their device repair.
-    the ouptut of this function is a list of dictionaries, each dictionary contains the title and text steps and images for each step.
+    Returns a JSON string containing a list of dictionaries. Each dictionary contains 
+    the step's 'title', an array of text 'steps', and an array of 'images' (URLs).
+    Use this tool whenever you need to provide the user with step-by-step device repair instructions.
     """
     url = "https://www.ifixit.com/api/2.0/guides/"
     request_url = f"{url}{guide_id}"
