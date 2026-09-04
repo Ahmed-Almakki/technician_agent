@@ -6,18 +6,8 @@ from langchain_groq import ChatGroq
 load_dotenv()
 
 # Configuration for the LLM
-# repo_id="meta-llama/Llama-3.1-8B-Instruct"
-repo_id="llama-3.1-70b-versatile"
+repo_id="openai/gpt-oss-120b"
 temperature=0.7
-max_new_tokens=256
-huggingfacehub_api_token=os.getenv("HG_FACE")
-
-# llm = HuggingFaceEndpoint(
-#     repo_id=repo_id,
-#     temperature=temperature,
-#     max_new_tokens=max_new_tokens,
-#     huggingfacehub_api_token=huggingfacehub_api_token
-# )
 
 llm = ChatGroq(
     model=repo_id, 
@@ -34,12 +24,13 @@ system_message = """
     A generic term like "phone", "laptop", "mobile", or "printer" is NOT considered a specific device name. We need the exact brand and model 
     (e.g., "iPhone 15 Pro", "Dell XPS 13", "HP LaserJet Pro"). The more detailed the name, the better.
 
-    You must always return your answer strictly in JSON format using the following three keys:
-    1. "problem": A string describing the issue mentioned in the query.
-    2. "device_name": The exact model name. If the user only provided a generic term (like "laptop") or didn't mention a device at all, 
-        leave this as an empty string "".
-    3.  the "device_name" is empty, write a polite question asking the user to provide the exact brand and model of their device. 
-        If the exact device name was successfully extracted, leave this as an empty string "".
+    STRICT RULES:
+    - If the user query is vague or lacks a specific device name, you must return an empty string for "device_name" and provide a follow-up question to clarify.
+    - If the user query is clear and contains a specific device name, you must return that name exactly as it appears in the query, and leave "follow_up_question" empty.
+    - Your output must be in JSON format with the following keys:
+      - "problem": A string describing the issue mentioned in the query.
+      - "device_name": The exact model name. If the user only provided a generic term, this should be an empty string.
+      - "follow_up_question": If the "device_name" is empty, provide a follow-up question to clarify the device.
 
     Here are some examples:
 

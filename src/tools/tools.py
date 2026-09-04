@@ -85,13 +85,26 @@ def steps_follow(guide_id: str):
         result = []
         if len(steps) > 0:
             for item in steps:
-                details= {}
-                details['title'] = item['title']
+                details = {}
+                details['title'] = item.get('title', '')
 
-                text = [step['text_raw'] for step in item['lines']]
+                # Safely get the text lines
+                lines = item.get('lines', [])
+                text = [step.get('text_raw', '') for step in lines]
                 details['steps'] = text
 
-                images = [img['thumbnail'] for img in item['media']['data']]
+                # Safely get the images, with a fallback just in case!
+                images = []
+                media = item.get('media')
+                
+                # Check if media exists and is an image type
+                if media and isinstance(media, dict) and media.get('type') == 'image':
+                    for img in media.get('data', []):
+                        # Try to get huge, fallback to original or large if huge is missing
+                        img_url = img.get('thumbnail') or img.get('original') or img.get('large')
+                        if img_url:
+                            images.append(img_url)
+                            
                 details['images'] = images
                 result.append(details)
         return json.dumps(result)

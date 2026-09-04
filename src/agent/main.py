@@ -1,68 +1,70 @@
 import json
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
 from ..tools.tools import search, categories, steps_follow
+from ..tools.extraction.user_query import extract_problem_and_device
 from .config import system_message, llm
 
 
-tools = [search, categories, steps_follow]
 memory_saver = InMemorySaver()
 
 
 def run_agent(query, chat_model, session_id):
-    """
-    Runs the agent to process the user query.
-
-    Args:
-        query (json): The user's query in JSON format.
-        chat_model (ChatGroq): The language model instance.
-        session_id (str): The unique ID for the user's conversation.
-    """
     user_query_string = json.dumps(query)
-
-    # chat_model = ChatHuggingFace(llm=llm)
 
     agent = create_agent(
         model=chat_model,
-        tools=tools,
+        tools=[search, categories, steps_follow, extract_problem_and_device],
         system_prompt=system_message,
         checkpointer=memory_saver
     )
 
     thread_config = {"configurable": {"thread_id": session_id}}
+    extracted_steps = None
 
-    # response = agent.invoke(
-    #     {"messages": [{"role": "user", "content": user_query_string}]},
-    #     config=thread_config
-    # )
+    try:
+        # for chunk in agent.stream(
+        #     {"messages": [{"role": "user", "content": user_query_string}]},
+        #     config=thread_config
+        # ):
+        stream = agent.stream_events(
+            {"messages": [{"role": "user", "content": user_query_string}]},
+            config=thread_config,
+            version="v3"
+        )
+        print("stream:\n", stream)
+            # node_name = list(chunk.keys())[0]
 
-   
-    print("--- AGENT THOUGHT PROCESS START ---")
-    
-    for chunk in agent.stream(
-        {"messages": [{"role": "user", "content": user_query_string}]},
-        config=thread_config
-    ):
-        # This will print every tool call, tool result, and LLM thought to your console
-        print(chunk)
-        print("-----------------------------------")
+            # if node_name == "tools" and chunk['tools'].get('messages'): 
+            #     result = chunk['tools'].get('messages')
+            #     for tool_msg in result:
+            #         if getattr(tool_msg, 'name', '') == 'steps_follow':
+            #             try:
+            #                 extracted_steps = json.loads(tool_msg.content)
+            #                 final_answer = "Here is the step-by-step repair guide I found for you. Let me know if you need clarification on any step!"
+            #                 return final_answer, extracted_steps
+                            
+            #             except json.JSONDecodeError:
+            #                 pass
 
-
-        final_answer = "I'm sorry, I couldn't process that request."
-        node_name = list(chunk.keys())[0]
-
-        if node_name in ["model", "agent"]: 
-            final_answer = chunk[node_name]["messages"][-1].content
+            # if node_name in ["model", "agent"]: 
+            #     final_answer = chunk[node_name]["messages"][-1].content
+                
+    except Exception as e:
+        if "rate_limit_exceeded" in str(e) or "413" in str(e):
+            final_answer = "I've hit my token limit for a moment! Please wait a minute and try asking again."
+        else:
+            final_answer = "Oops, a system error occurred while processing your request."
             
-    print("--- AGENT THOUGHT PROCESS END ---")
-    return final_answer
+        # Log the actual error to your terminal for debugging, but hide it from the user interface
+        print(f"API Error: {str(e)}")
 
+    return final_answer, extracted_steps
 
-    # return response["messages"][-1].content
 
 query = json.loads('{"device_name": "Sony PlayStation 5", "problem": "fan replacement"}')
+# query = "How i fix my samsung galaxy s21 ultra screen that is broken and not working properly"
 print("query:\n\n", query)
 result = run_agent(query, llm, "test_session_1")
 print("\n\n", "=========="*40)
