@@ -1,9 +1,11 @@
-import requests as req
-from langchain_core.tools import tool
 import json
+from langchain_core.tools import tool
+import mlflow
+import requests as req
 
 
 @tool
+@mlflow.trace(name="search_tool", span_type="TOOL")
 def search(device_name: str) -> list:
     """
     Search for the correct device name in the ifixit database using the provided device name.
@@ -33,7 +35,9 @@ def search(device_name: str) -> list:
 
     return json.dumps(devices)
 
+
 @tool
+@mlflow.trace(name="category_tool", span_type="TOOL")
 def categories(device_name: str) -> list:
     """
     Fetches the categories for a given device name from the iFixit API.
@@ -63,7 +67,9 @@ def categories(device_name: str) -> list:
 
     return json.dumps(categories)
 
+
 @tool
+@mlflow.trace(name="steps_tool", span_type="RETRIEVER") # this is retriver so the metrics that check retrival
 def steps_follow(guide_id: str):
     """
     Fetches the steps for a given guide ID from the iFixit API.

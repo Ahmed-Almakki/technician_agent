@@ -5,15 +5,18 @@ from langchain_groq import ChatGroq
 
 load_dotenv()
 
+print("DEBUG GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
+
 # Configuration for the LLM
 repo_id="openai/gpt-oss-120b"
 temperature=0.7
+groq_api_key=os.getenv("GROQ_API_KEY")
 
 llm = ChatGroq(
     model=repo_id, 
     temperature=temperature, 
     max_retries=2,
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=groq_api_key
 )
 
 system_message = """
