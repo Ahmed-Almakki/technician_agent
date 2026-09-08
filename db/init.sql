@@ -1,0 +1,16 @@
+SELECT 'CREATE DATABASE mlflow_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mlflow_db')\gexec
+SELECT 'CREATE DATABASE grafana_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'grafana_db')\gexec
+
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+
+-- Step 1: Create the table safely
+CREATE TABLE IF NOT EXISTS agent_history (
+ id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+ query vector(768) NULL,
+ guide_id VARCHAR(255) NULL,
+ session_id VARCHAR(255) NULL,
+ created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

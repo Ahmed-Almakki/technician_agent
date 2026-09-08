@@ -12,12 +12,6 @@ eval_dataset = [
     # 1. HAPPY PATH (15 Rows) - Perfect grammar, specific device, clear problem
     # ---------------------------------------------------------
     {
-        "inputs": {"query": "How do I replace the battery on my iPhone 13?"},
-        "expected_action": "provide_steps", 
-        "expected_guide_id": "145896", 
-        "expectations": {"expected_response" :"The agent should output an HTML-formatted repair guide detailing the steps to replace the iPhone 13 battery."}
-    },
-    {
         "inputs": {"query": "I need steps to fix the joystick on my Nintendo Switch Left Joy-Con."}, 
         "expected_action": "provide_steps", 
         "expected_guide_id": "188976", 
@@ -40,6 +34,12 @@ eval_dataset = [
         "expected_action": "provide_steps", 
         "expected_guide_id": "149529", 
         "expectations": {"expected_response" :"The agent should output an HTML-formatted repair guide detailing the Samsung Galaxy S21 Ultra charging board replacement."}
+    },
+    {
+        "inputs": {"query": "How do I replace the battery on my iPhone 13?"},
+        "expected_action": "provide_steps", 
+        "expected_guide_id": "145896", 
+        "expectations": {"expected_response" :"The agent should output an HTML-formatted repair guide detailing the steps to replace the iPhone 13 battery."}
     },
     {
         "inputs": {"query": "How do I replace a cracked screen on a Google Pixel 6?"}, 

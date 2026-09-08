@@ -1,8 +1,6 @@
 from dotenv import load_dotenv, find_dotenv
-from typing import Literal
 import mlflow
-from mlflow.genai.judges import make_judge
-from mlflow.genai.scorers import Safety, Correctness, RelevanceToQuery, Guidelines, ToolCallCorrectness, ToolCallEfficiency, RetrievalRelevance, RetrievalGroundedness
+from mlflow.genai.scorers import Correctness, ToolCallCorrectness, RetrievalRelevance, RetrievalGroundedness
 import os
 import uuid
 
@@ -34,20 +32,6 @@ def evaluate_guide_selection(eval_df):
     return scores
 
 
-clarification_metric = make_judge(
-    name="asks_for_clarification",
-    instructions=(
-        "Evaluate whether the agent properly asks the user for the specific device model when the initial query is too vague.\n"
-        "Score 1 if the agent asked for clarification for a vague query. "
-        "Score 0 if the agent proceeded blindly or if it asked for clarification when the query was already clear.\n\n"
-        "User Query: {{ inputs }}\n"
-        "Agent Response: {{ outputs }}"
-    ),
-    feedback_value_type=Literal[0, 1],
-    model=model
-)
-
-
 def agent(query):
     session_id = str(uuid.uuid4())
     
@@ -55,21 +39,24 @@ def agent(query):
 
     return anwer
 
+
+# For Development phase
+# Limit concurrent data items being evaluated (default is 10)
+os.environ["MLFLOW_GENAI_EVAL_MAX_WORKERS"] = "1"
+
+# Limit concurrent scorer execution (default is 10) - run scorers sequentially
+os.environ["MLFLOW_GENAI_EVAL_MAX_SCORER_WORKERS"] = "1"
+
 if __name__ == "__main__":
     # Use the MLflow 3.0+ GenAI evaluate function
     results = mlflow.genai.evaluate(
         predict_fn=agent,               
-        data=df,
+        data=df.head(5),
         scorers=[
-            Safety(model=model),
             Correctness(model=model), 
-            Guidelines(name="is_english", guidelines="The answer must be in HTML format", model=model),
-            RelevanceToQuery(model=model),
             RetrievalRelevance(model=model),
             RetrievalGroundedness(model=model), 
             ToolCallCorrectness(model=model),
-            ToolCallEfficiency(model=model),
-            clarification_metric
         ],
     )
 

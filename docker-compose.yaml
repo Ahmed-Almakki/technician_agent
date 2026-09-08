@@ -1,0 +1,120 @@
+services:
+
+  db:
+    image: pg_vector:0.0.1
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "5433:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: ["postgres", "-c", "wal_level=logical"]
+
+  adminer:
+    image: adminer:standalone
+    restart: always
+    ports:
+      - 8081:8080
+
+  # Agent Logic/Environment
+  agent:
+    image: system:0.0.3
+    env_file:
+      - .env
+    depends_on:
+      - mlflow
+    command: ["uv", "run", "python3", "-m", "src.agent.main"]
+    volumes:
+      - /home/ahmed-sulieman/Desktop/AI_projects/tech_agent/your_local_model_folder:/app/models/my_model
+    environment:
+      - EMBEDDING_MODEL_PATH=/app/models/my_model
+
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4317/v1/traces
+      - OTEL_SERVICE_NAME=my-langchain-app
+      - MLFLOW_ENABLE_OTEL_GENAI_SEMCONV=true
+      - MLFLOW_TRACE_ENABLE_OTLP_DUAL_EXPORT=true
+
+  app:
+    image: system:0.0.3
+    command: ["uv", "run", "streamlit", "run", "app/tech_agent.py"]
+    ports:
+      - "8501:8501"
+    depends_on:
+      - agent
+    env_file:
+      - .env
+    volumes:
+      - /home/ahmed-sulieman/.cache/huggingface/hub/models--sentence-transformers--all-MiniLM-L6-v2/snapshots/c9745ed1d9f207416be6d2e6f8de32d1f16199bf:/app/models/my_model
+    environment:
+      - EMBEDDING_MODEL_PATH=/app/models/my_model
+      - POSTGRES_HOST=db 
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      # 1. ADD TRACING VARS HERE WITH PORT 4318
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4317/v1/traces
+      - OTEL_SERVICE_NAME=my-langchain-app
+      - MLFLOW_ENABLE_OTEL_GENAI_SEMCONV=true
+      - MLFLOW_TRACE_ENABLE_OTLP_DUAL_EXPORT=true
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/mlflow_db
+
+    volumes:
+      - mlflow_artifact_volume:/mlflow/artifacts
+    
+    ports:
+      - 5000:5000
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/mlflow_db
+      --default-artifact-root mlflow-artifacts:/
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+      --host 0.0.0.0
+      --port 5000
+      --allowed-hosts "*"
+
+# Montoring
+  tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./monitoring/tempo/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "4317:4317"
+      - "3200:3200"
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      - tempo
+  
+volumes:
+  mlflow_artifact_volume:

@@ -4,17 +4,18 @@ from langgraph.checkpoint.memory import InMemorySaver
 from dotenv import load_dotenv
 import mlflow
 import os
+import warnings
 
-from ..tools.tools import search, categories, steps_follow
-from ..tools.extraction.user_query import extract_problem_and_device
-from .config import system_message, llm
+from ..tools.tools import search, categories, steps_follow, retriver, save_to_db
+from .config import system_message
 
 
+warnings.filterwarnings("ignore", module="langchain_nvidia_ai_endpoints")
 load_dotenv()
 
 mlflow.langchain.autolog()
-mlflow.set_experiment(os.getenv('EXPERIMENT_NAME'))
 mlflow.set_tracking_uri(os.getenv('TRACK_URI'))
+mlflow.set_experiment(os.getenv('EXPERIMENT_NAME'))
 memory_saver = InMemorySaver()
 
 
@@ -23,7 +24,7 @@ def run_agent(query, chat_model, session_id):
 
     agent = create_agent(
         model=chat_model,
-        tools=[search, categories, steps_follow, extract_problem_and_device],
+        tools=[search, categories, steps_follow, retriver, save_to_db],
         system_prompt=system_message,
         checkpointer=memory_saver
     )
@@ -56,7 +57,7 @@ def run_agent(query, chat_model, session_id):
 
 
 # query = json.loads('{"device_name": "Sony PlayStation 5", "problem": "fan replacement"}')
-# query = "How i restart my iphone 13"
+# # query = "How i restart my iphone 13"
 # result = run_agent(query, llm, "test_session_1")
 # print("\n\n", "=========="*40)
 # print("final result:\n\n", result)
