@@ -1,4 +1,4 @@
-run:
+app:
 	clear
 	PYTHONPATH=. streamlit run app/tech_agent.py
 agent:
@@ -8,3 +8,6 @@ agent:
 eval_agent:
 	clear
 	python3 -m eval.run_eval
+
+run:
+	docker compose up -d
